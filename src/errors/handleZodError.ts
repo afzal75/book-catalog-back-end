@@ -1,6 +1,6 @@
 import { ZodError, ZodIssue } from 'zod'
-import { IGenericErrorMessage } from '../app/interfaces/error'
-import { IGenericErrorResponse } from '../app/interfaces/common'
+import { IGenericErrorResponse } from '../interfaces/common'
+import { IGenericErrorMessage } from '../interfaces/error'
 
 const handleZodError = (error: ZodError): IGenericErrorResponse => {
   const errors: IGenericErrorMessage[] = error.issues.map((issue: ZodIssue) => {

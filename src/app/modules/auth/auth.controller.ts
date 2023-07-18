@@ -1,49 +1,56 @@
-import httpStatus from "http-status";
-import catchAsync from "../../../shared/catchAsync";
-import { AuthService } from "./auth.service";
-import { Request, Response } from "express";
-import { jwtHelpers } from "../../../helpers/jwtHelpers";
-import config from "../../../config";
-import { Secret } from "jsonwebtoken";
-import sendResponse from "../../../shared/sendApiResponse";
+import { Request, Response } from 'express'
+import catchAsync from '../../../shared/catchAsync'
+import sendResponse from '../../../shared/sendResponse'
+import { ILoginUserResponse, IRefreshTokenResponse } from './auth.interface'
+import { AuthService } from './auth.service'
+import config from '../../../config/config'
+import httpStatus from 'http-status'
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
-  const { ...loginData } = req.body;
-  const result = await AuthService.loginUser(loginData);
-  sendResponse(res, {
+  const { ...loginData } = req.body
+  const result = await AuthService.loginUser(loginData)
+  const { refreshToken, ...others } = result
+
+  // set refresh token into cookie
+
+  const cookieOptions = {
+    secure: config.env === 'production',
+    httpOnly: true,
+  }
+
+  res.cookie('refreshToken', refreshToken, cookieOptions)
+
+  sendResponse<ILoginUserResponse>(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "User logged in successfully",
-    data: result,
-  });
-});
+    message: 'User logged in successfully !',
+    data: others,
+  })
+})
 
-const signupUser = catchAsync(async (req: Request, res: Response) => {
-  const { ...userData } = req.body;
-  const result = await AuthService.signupUser(userData);
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.cookies
 
-  if (result) {
-    const { email, name } = result;
+  const result = await AuthService.refreshToken(refreshToken)
 
-    const accessToken = jwtHelpers.createToken(
-      { email, name },
-      config.jwt.secret as Secret,
-      config.jwt.expires_in as string
-    );
+  // set refresh token into cookie
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "User created successfully",
-      data: {
-        accessToken,
-        user: result,
-      },
-    });
+  const cookieOptions = {
+    secure: config.env === 'production',
+    httpOnly: true,
   }
-});
+
+  res.cookie('refreshToken', refreshToken, cookieOptions)
+
+  sendResponse<IRefreshTokenResponse>(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User logged in successfully !',
+    data: result,
+  })
+})
 
 export const AuthController = {
   loginUser,
-  signupUser,
-};
+  refreshToken,
+}

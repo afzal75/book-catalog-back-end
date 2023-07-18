@@ -1,31 +1,35 @@
-import express, { Application, NextFunction, Request, Response } from "express";
-import cors from "cors";
-import httpStatus from "http-status";
-import globalErrorHandler from "./app/middleware/globalErrorHandler";
-import { AuthRoutes } from "./app/modules/auth/auth.route";
-const app: Application = express();
-app.use(cors());
+import express, { Application, NextFunction, Request, Response } from 'express'
+import cors from 'cors'
+import httpStatus from 'http-status'
+import routes from './app/routes'
+import cookieParser from 'cookie-parser'
+import globalErrorHandlers from './app/middleware/globalErrorHandler'
+const app: Application = express()
 
-// parser
+// Middleware
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors())
+app.use(cookieParser())
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-app.use("/api/v1/", AuthRoutes);
+// Root directory route
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+app.get('/', (req: Request, res: Response) => {
+  res.send('Welcome to the book trekker')
+})
 
-app.use(globalErrorHandler)
+// application routes
+app.use('/', routes)
+//global error handler
+app.use(globalErrorHandlers)
 
-// handle not fund route
-
+// handle not found route
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(httpStatus.NOT_FOUND).json({
     success: false,
-    message: 'Not Found',
-    errorMessages: [
+    message: 'Not found',
+    errorMessage: [
       {
         path: req.originalUrl,
         message: 'Api Not Found',
@@ -35,4 +39,4 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next()
 })
 
-export default app;
+export default app
